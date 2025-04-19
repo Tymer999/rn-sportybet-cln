@@ -18,8 +18,8 @@ const OpenBetScreen = () => {
     >
       <View
         className={`px-2 py-2 ${
-          selectedTab === tab.id ? "bg-black" : "bg-white"
-        } rounded-sm`}
+          selectedTab === tab.id ? "bg-black" : "bg-gray-light"
+        } rounded-sm items-center justify-center`}
       >
         <Text
           className={`${selectedTab === tab.id ? "text-white" : "text-black"}`}

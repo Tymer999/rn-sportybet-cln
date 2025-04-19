@@ -31,6 +31,7 @@ export default function RootLayout() {
     <>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="ticketScreen" options={{ headerShown: false }} />
         {/* <Stack.Screen name="+not-found" /> */}
       </Stack>
       {/* <StatusBar style="auto" backgroundColor="red" /> */}
