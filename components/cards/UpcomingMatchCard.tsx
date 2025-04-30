@@ -22,10 +22,6 @@ const UpcomingMatchCard = () => {
           <Text className='text-black text-sm font-medium'>Ghana</Text>
           <Text className='text-black text-sm font-medium'>Nigeria</Text>
         </View>
-        <View className='flex gap-[5px] mr-1'>
-          <Text className='text-black text-sm font-medium'>0</Text>
-          <Text className='text-black text-sm font-medium'>0</Text>
-        </View>
       </View>
       <View className='flex-1 flex-row items-center justify-between gap-[1px]'>
         <CustomBetButton backgroundColor='#daeadd' textColor='#0D9737' />

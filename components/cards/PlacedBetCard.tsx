@@ -1,42 +1,73 @@
 import { View, Text, TouchableWithoutFeedback, Image } from "react-native";
-import React, { useState } from "react";
+import React, { FC, useState } from "react";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Material from "@expo/vector-icons/MaterialIcons";
+import { formatCurrency } from "@/constants/FormatCurrency";
+import { calculateTotalOdds } from "@/utils/utils";
 
-const PlacedBetCard = () => {
+interface PlacedBetCardProps {
+  bet: {
+    id: number;
+    stake: number;
+    potentialWin: number;
+    matches: Array<{
+      id: number;
+      teams: {
+        home: string;
+        away: string;
+      };
+      odds: number;
+      pick: string;
+      dateTime: string;
+      market: string;
+    }>;
+  };
+}
+
+const PlacedBetCard: FC<PlacedBetCardProps> = ({ bet }) => {
   const [expanded, setExpanded] = useState<boolean>(false);
 
-  const matches = [
-    {
-      id: 1,
-    },
-    {
-      id: 2,
-    },
-  ]
+  const MatchesElements = bet.matches.map((match, index) => (
+    <View className={`flex-row items-center gap-2 pt-3 pb-10`} key={index}>
+      <View className="w-10rem]" style={{ width: 40 }}>
+        <Material name="schedule" size={20} color={"#353A45"} />
+      </View>
 
-  const MatchesElements = matches.map((match, index) => (<View className={`flex-row items-center ${index === matches.length - 1 ? "" : "border-b-[.6px] border-b-gray"} gap-2 pt-3 pb-8`} key={match.id}>
-    <View className="w-10rem]" style={{width: 40}}>
-      <Material name="schedule" size={20} color={"#353A45"} />
+      <View className="flex-1">
+        {index === 1 && (
+          <View
+            className="bg-gray-light  mb-2"
+            style={{ width: "100%", height: 0.5, opacity: 0.3 }}
+          />
+        )}
+        <View className="gap-2 flex-1">
+          <View className="flex flex-row items-center gap-1">
+            <Image
+              source={require("../../assets/icons/football.png")}
+              className="w-5 h-5 opacity-80 border-2 border-white rounded-full"
+              resizeMode="contain"
+            />
+            <Text className="font-semibold text-black">{match.pick}</Text>
+            <Text className="font-semibold text-black">@{match.odds.toFixed(2)}</Text>
+            <Text className="text-gray ml-1">{match.market}</Text>
+          </View>
+          <View className="flex flex-row gap-0">
+            <Text className="text-black underline">
+              {match.teams.home}
+            </Text>
+            <Text className="text-gray underline"> vs </Text>
+            <Text className="text-black underline">
+              {match.teams.away}
+            </Text>
+          </View>
+          <View className="flex flex-row mt-1">
+            <Text className="text-gray text-sm">{match.dateTime}</Text>
+          </View>
+        </View>
+      </View>
     </View>
-    <View className="gap-2 flex-1">
-      <View className="flex flex-row items-center gap-1">
-        <Image source={require("../../assets/icons/football.png")} className="w-4 h-4" resizeMode="contain" />
-        <Text className="font-bold text-black">Home</Text>
-        <Text className="font-bold text-black">@2.45</Text>
-        <Text className="text-gray">1X2</Text>
-      </View>
-      <View className="flex flex-row gap-0">
-        <Text className="text-black font-medium underline">FC Midtjlland </Text>
-        <Text className="text-gray underline">vs</Text>
-        <Text className="text-black font-medium underline"> Copenhagen</Text>
-      </View>
-      <View className="flex flex-row">
-        <Text className="text-gray text-sm">17/04 16:45</Text>
-      </View>
-    </View>
-  </View>));
+  ));
 
   return (
     <View
@@ -54,7 +85,9 @@ const PlacedBetCard = () => {
     >
       <View className="flex flex-row items-center justify-between">
         <View>
-          <Text className="text-lg font-bold text-black">Multiple</Text>
+          <Text className="text-lg font-semibold text-black">
+            {bet.matches.length === 1 ? "Single" : "Multiple"}
+          </Text>
         </View>
 
         <View className="flex flex-row gap-2 items-center">
@@ -65,23 +98,38 @@ const PlacedBetCard = () => {
       </View>
 
       <View
-        className="bg-gray mt-2"
-        style={{ width: "100%", height: .5 }}
+        className="bg-gray-light mt-2 mb-2"
+        style={{ width: "100%", height: 0.5, opacity: 0.3 }}
       />
 
       {!expanded ? (
         <TouchableWithoutFeedback onPress={() => setExpanded(true)}>
           <View className="flex flex-row items-start justify-between w-full pt-2">
             <View className="flex-1 pr-2 gap-2">
-              <View className="flex flex-row gap-2">
-                <Text className="text-black font-medium">Real Madrid</Text>
-                <Text className="text-gray font-medium">vs</Text>
-                <Text className="text-black font-medium">Arsenal</Text>
+              <View className="flex flex-row gap-2 flex-1">
+                <Text
+                  className="text-black font-medium text-ellipsis"
+                  numberOfLines={1}
+                >
+                  {bet.matches[0].teams.home}
+                </Text>
+                <Text className="text-gray font-medium ">vs</Text>
+                <Text
+                  className="text-black font-medium text-ellipsis flex-1"
+                  numberOfLines={1}
+                >
+                  {bet.matches[0].teams.away}
+                </Text>
               </View>
 
               <View className="flex flex-row gap-1">
                 <Text className="text-gray font-medium">Stake</Text>
-                <Text className="text-black font-bold">1.10</Text>
+                <Text
+                  className="text-black font-bold text-ellipsis"
+                  numberOfLines={1}
+                >
+                  {formatCurrency(bet.stake)}
+                </Text>
               </View>
             </View>
             <View
@@ -95,9 +143,7 @@ const PlacedBetCard = () => {
         </TouchableWithoutFeedback>
       ) : (
         <View>
-          <View>
-            {MatchesElements}
-          </View>
+          <View>{MatchesElements}</View>
 
           <TouchableWithoutFeedback
             className="w-full"
@@ -109,23 +155,27 @@ const PlacedBetCard = () => {
             </View>
           </TouchableWithoutFeedback>
           <View
-            className="bg-gray mt-2 mb-2"
-            style={{ width: "100%", height: .5 }}
+            className="bg-gray-light mt-2 mb-2"
+            style={{ width: "100%", height: 0.5, opacity: 0.3 }}
           />
 
           <View className="gap-2">
             <View className="flex flex-row items-center justify-between">
               <Text className="text-black font-normal">Stake</Text>
-              <Text className="text-black font-bold">0.10</Text>
+              <Text className="text-black font-bold opacity-95">
+                {formatCurrency(bet.stake)}
+              </Text>
             </View>
             <View className="flex flex-row items-center justify-between">
               <Text className="text-black font-normal">Pot. Win</Text>
-              <Text className="text-black font-bold">0.10</Text>
+              <Text className="text-black font-bold opacity-95">
+                {formatCurrency(calculateTotalOdds(bet.matches) * bet.stake)}
+              </Text>
             </View>
           </View>
 
           <View className="mt-2">
-            <View className="w-full h-[3.25rem] bg-secondary-dark flex-row items-center gap-1 justify-center">
+            <View className="w-full h-[3.55rem] bg-secondary-dark flex-row items-center gap-1 justify-center">
               <Text className="text-white font-medium">Cashout</Text>
               <Text className="text-white font-bold">GHS 1.20</Text>
             </View>

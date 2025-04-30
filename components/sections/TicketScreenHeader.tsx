@@ -6,13 +6,22 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Modal,
+  Image,
   TextInput,
   Platform,
   Keyboard,
 } from "react-native";
 import * as Clipboard from "expo-clipboard";
-import React, { useState } from "react";
+import React, { FC, useState } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import CustomSingleInputModel from "../models/StakeModel";
+import {
+  addMatchesToBet,
+  updateTicketDetails,
+} from "@/services/FirestoreService";
+import { useAuth } from "@/context/AuthContext";
+import { formatCurrency } from "@/constants/FormatCurrency";
+import { calculateTotalOdds } from "@/utils/utils";
 
 type Match = {
   teams: {
@@ -24,11 +33,37 @@ type Match = {
   market: string;
   gameId: string;
   dateTime: string;
+  outcome?: string;
+  ftScore: string;
+  matchStatus: "void" | "notStart" | "won" | "lost";
 };
 
-const TicketScreenHeader = () => {
+interface TicketScreenHeaderProps {
+  bet: {
+    id: string;
+    totalOdds: number;
+    maxBunus: number;
+    stake: number;
+    potentialReturn: number;
+    bookingCode: string;
+    ticketId: string;
+    dateTime: string;
+    status: "running" | "notStart" | "won" | "lost";
+    matches: Array<Match>;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+}
+
+const TicketScreenHeader: FC<TicketScreenHeaderProps> = ({ bet }) => {
   const [pasteBetModel, setPasteBetModel] = React.useState(false);
+  const [stakeModal, setStakeModal] = React.useState(false);
+  const [ticketIdModel, setTicketIdModel] = React.useState(false);
+  const [dateTimeModel, setDateTimeModel] = React.useState(false);
+  const [bookingCodeModal, setBookingCodeModal] = React.useState(false);
   const [betValue, setBetValue] = useState("");
+  const [maxBunus, setMaxBonus] = useState(1.00);
+  const { user } = useAuth();
 
   const handlePaste = async () => {
     const text = await Clipboard.getStringAsync();
@@ -70,6 +105,27 @@ const TicketScreenHeader = () => {
           ?.replace("Market", "")
           .trim() || "";
 
+      // Get FT Score if available
+      // Get FT Score - modified to check next line
+      const ftScoreIndex = cleanLines.findIndex((line) =>
+        line.includes("FT Score:")
+      );
+      let ftScore = "0:0";
+      if (ftScoreIndex !== -1 && ftScoreIndex + 1 < cleanLines.length) {
+        const scoreLine = cleanLines[ftScoreIndex + 1].trim();
+        // Check if the next line contains numbers and colon (e.g., "2:1")
+        if (/^\d+:\d+$/.test(scoreLine)) {
+          ftScore = scoreLine;
+        }
+      }
+
+      // Get outcome if available
+      const outcomeLine = cleanLines.find((line) => line.includes("Outcome"));
+
+      const outcome = outcomeLine
+        ? outcomeLine.replace("Outcome", "").trim()
+        : "";
+
       return {
         teams: {
           home: homeTeam,
@@ -80,41 +136,233 @@ const TicketScreenHeader = () => {
         market,
         gameId,
         dateTime,
+        ftScore,
+        outcome,
+        matchStatus: "won", // Default status
       };
     });
   };
 
+  const handleUpdateMatches = async () => {
+    try {
+      if (!user || !betValue) return;
+
+      const parsedMatches = parseBetValue(betValue);
+      await addMatchesToBet(user.uid, bet?.id, parsedMatches);
+
+      setPasteBetModel(false);
+      setBetValue("");
+    } catch (error) {
+      console.error("Error updating matches:", error);
+      // Handle error (show alert, etc.)
+    }
+  };
+
+  const handleStakeUpdate = async (newStake: string) => {
+    try {
+      if (!user) return;
+      const stake = parseFloat(newStake);
+
+      await updateTicketDetails(user.uid, bet.id, { stake });
+
+      setStakeModal(false);
+    } catch (error) {
+      console.error("Error updating stake:", error);
+    }
+  };
+
+  const handleTicketIdUpdate = async (newTicketId: string) => {
+    try {
+      if (!user) return;
+
+      await updateTicketDetails(user.uid, bet.id, { ticketId: newTicketId });
+
+      // Update local state
+      setTicketIdModel(false);
+    } catch (error) {
+      console.error("Error updating ticket ID:", error);
+    }
+  };
+
+  const handleDateTimeUpdate = async (newDateTime: string) => {
+    try {
+      if (!user) return;
+
+      await updateTicketDetails(user.uid, bet.id, { dateTime: newDateTime });
+
+      // Update local state
+
+      setDateTimeModel(false);
+    } catch (error) {
+      console.error("Error updating date/time:", error);
+    }
+  };
+
+  const handleBookingCodeUpdate = async (newBookingCode: string) => {
+    try {
+      if (!user) return;
+      
+
+      await updateTicketDetails(user.uid, bet.id, { bookingCode: newBookingCode });
+
+      // Update local state
+
+      setBookingCodeModal(false);
+    } catch (error) {
+      console.error("Error updating date/time:", error);
+    }
+  };
+
   return (
     <>
-      <View className="bg-[#292929] px-4 pb-5 pt-3">
+      <View className={`bg-[#1b1e25] px-4 ${bet.status === "running" ? "pb-3" : "pb-6"} pt-3`}>
         <View className="flex-row items-center justify-between mb-3">
-          <Text className="text-sm font-medium text-gray">
-            Ticket ID: 946694
-          </Text>
-          <Text className="text-sm font-medium text-gray">17/04, 11:49</Text>
-        </View>
-        <View className="flex-row items-center justify-between mb-3">
-          <TouchableWithoutFeedback onPress={() => setPasteBetModel(true)}>
-            <Text className="text-white font-medium text-xl">Multiple</Text>
+          <TouchableWithoutFeedback onPress={() => setTicketIdModel(true)}>
+            <Text className="text-sm font-medium text-gray">
+              Ticket ID: {bet.ticketId}
+            </Text>
           </TouchableWithoutFeedback>
-          <Text className="text-gray font-medium text-xl">Lost</Text>
+          <TouchableWithoutFeedback onPress={() => setDateTimeModel(true)}>
+            <Text className="text-sm font-medium text-gray">
+              {bet.dateTime}
+            </Text>
+          </TouchableWithoutFeedback>
         </View>
         <View className="flex-row items-center justify-between">
-          <Text className="text-gray text-lg font-medium">Total Return</Text>
-          <Text className="text-gray text-xl font-bold">0.00</Text>
+          <TouchableWithoutFeedback onPress={() => setPasteBetModel(true)}>
+            <Text className="text-white font-medium text-lg">
+              {bet.matches.length === 1 ? "Single" : "Multiple"}
+            </Text>
+          </TouchableWithoutFeedback>
+          {bet.status === "lost" ? (
+            <Text className="text-gray font-medium text-lg">Lost</Text>
+          ) : bet.status === "running" ? (
+            <View className="flex-row gap-3 items-center">
+              <View className="border items-center justify-center border-secondary-dark px-2 py-1 rounded-sm">
+                <Text className="text-secondary-dark font-semibold">
+                  Edit Bet
+                </Text>
+              </View>
+              <Text className="text-white font-medium text-lg">Running</Text>
+            </View>
+          ) : (
+            <View className="flex-row items-center">
+              <Image
+                source={require("../../assets/cup/cup_icon.png")}
+                resizeMode="contain"
+                className="w-8 h-7"
+                tintColor={"#32CE62"}
+              />
+              <Text className="text-secondary font-medium text-lg">
+                Won
+              </Text>
+            </View>
+          )}
+        </View>
+        <View className="flex-row items-center justify-between mt-2">
+          <Text className="text-gray text-[15px]">Total Return</Text>
+          {bet.status === "lost" ? (
+            <Text className="text-gray text-xl font-bold">0.00</Text>
+          ) : bet.status === "running" ? (
+            <Text className="text-gray text-xl font-bold">--</Text>
+          ) : (
+            <Text className="text-secondary text-xl font-bold">
+              {formatCurrency(calculateTotalOdds(bet.matches) * bet.stake)}
+            </Text>
+          )}
         </View>
 
-        <View className="w-full h-[.5px] bg-gray my-3" />
+        <View className="w-full h-[.5px] bg-[#353a45] my-3" />
 
-        <View className="flex-row items-center justify-between mb-2">
-          <Text className="text-gray text-lg font-medium">Total Stake</Text>
-          <Text className="text-gray text-lg font-medium">0.10</Text>
-        </View>
+        <TouchableWithoutFeedback onPress={() => setStakeModal(true)}>
+          <View className="flex-row items-center justify-between mb-[5px]">
+            <Text className="text-gray text-[15px]">Total Stake</Text>
+            <Text className="text-white text-[15px]">
+              {bet.stake.toFixed(2)}
+            </Text>
+          </View>
+        </TouchableWithoutFeedback>
+
         <View className="flex-row items-center justify-between">
-          <Text className="text-gray text-lg font-medium">Total Odds</Text>
-          <Text className="text-gray text-lg font-medium">3.45</Text>
+          <Text className="text-gray text-[15px]">Total Odds</Text>
+          <Text className="text-white text-[15px]">
+            {calculateTotalOdds(bet.matches).toFixed(2)}
+          </Text>
         </View>
+
+        {bet.status === "running" && (
+          <View className="mt-[4.55px] gap-[5px]">
+            <View className="flex-row items-center justify-between">
+              <Text className="text-gray text-[15px]">Max Bonus</Text>
+              <Text className="text-white text-[15px]">0.02</Text>
+            </View>
+            <View className="flex-row items-center justify-between">
+              <Text className="text-gray text-[15px]">Total Pot. Win</Text>
+              <Text className="text-white text-[15px]">
+                {formatCurrency(calculateTotalOdds(bet.matches) * bet.stake)}
+              </Text>
+            </View>
+
+            <View className="flex-row items-center justify-between border-t-[.7px] border-t-[#353a45] pt-3 mt-5">
+              <View className="flex-row items-center gap-2">
+                <View>
+                  <Text className="text-gray text-xs font-medium">
+                    Booking Code
+                  </Text>
+                  <TouchableWithoutFeedback
+                    onPress={() => setBookingCodeModal(true)}
+                  >
+                    <Text className="text-lg font-medium text-white">
+                      {bet.bookingCode}
+                    </Text>
+                  </TouchableWithoutFeedback>
+                </View>
+                <MaterialIcons name="copy-all" size={22} color={"white"} />
+                <MaterialIcons name="share" size={22} color={"white"} />
+              </View>
+
+              <View className="flex-row items-center gap-2">
+                <MaterialIcons name="info" size={16} color={"#9CA0AB"} />
+                <View className="items-center justify-center px-2 py-2 bg-secondary-dark rounded-sm h-[3.15rem] w-[7rem]">
+                  <Text className="text-white font-medium">Rebet</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
       </View>
+
+      <CustomSingleInputModel
+        isOpen={stakeModal}
+        onRequestClose={() => setStakeModal(false)}
+        type="stake"
+        onSubmit={(stake) => handleStakeUpdate(stake)}
+        initialValue={bet.stake.toString()}
+      />
+
+      <CustomSingleInputModel
+        isOpen={ticketIdModel}
+        onRequestClose={() => setTicketIdModel(false)}
+        type="ticketId"
+        onSubmit={(ticketId) => handleTicketIdUpdate(ticketId)}
+        initialValue={bet.ticketId}
+      />
+
+      <CustomSingleInputModel
+        isOpen={dateTimeModel}
+        onRequestClose={() => setDateTimeModel(false)}
+        type="dateTime"
+        onSubmit={(dateTime) => handleDateTimeUpdate(dateTime)}
+        initialValue={bet.dateTime}
+      />
+
+      <CustomSingleInputModel
+        isOpen={bookingCodeModal}
+        onRequestClose={() => setBookingCodeModal(false)}
+        type="bookingCode"
+        onSubmit={(bookingCode) => handleBookingCodeUpdate(bookingCode)}
+        initialValue={bet.bookingCode}
+      />
 
       <Modal
         animationType="slide"
@@ -144,11 +392,18 @@ const TicketScreenHeader = () => {
                     placeholder="Value"
                     value={betValue}
                     onChangeText={setBetValue}
-                    multiline
-                    numberOfLines={4}
                     placeholderTextColor={"#BDC0C7"}
                     keyboardType="numeric"
                     onFocus={handlePaste}
+                  />
+
+                  <TextInput
+                    className="border border-gray-300 rounded-2xl p-4 mb-3 mr-[1px]"
+                    placeholder="Max. Bonus"
+                    value={maxBunus.toFixed(2)}
+                    onChangeText={(e) => setMaxBonus(parseFloat(e) || 0)}
+                    placeholderTextColor={"#BDC0C7"}
+                    keyboardType="numeric"
                   />
 
                   <View className="bg-[#000] self-start px-3 py-1 rounded-sm mb-3">
@@ -158,12 +413,7 @@ const TicketScreenHeader = () => {
                   <View className="flex-row w-full gap-2">
                     <TouchableOpacity
                       className="bg-secondary p-4 rounded-2xl flex-1"
-                      onPress={() => {
-                        const parsedMatches = parseBetValue(betValue);
-                        console.log("Parsed matches:", parsedMatches);
-                        // Do something with the parsed matches
-                        setPasteBetModel(false);
-                      }}
+                      onPress={handleUpdateMatches}
                     >
                       <Text className="text-white font-bold text-center">
                         Update

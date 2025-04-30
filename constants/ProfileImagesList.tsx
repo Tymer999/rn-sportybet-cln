@@ -11,35 +11,43 @@ const p8 = require("../assets/profile_pic_images/14.png");
 const profileImagesList = [
   {
     id: 1,
-    image: p1
+    image: p1,
+    profile: "3.png"
   },
   {
     id: 2,
-    image: p2
+    image: p2,
+    profile: "7.png"
   },
   {
     id: 3,
-    image: p3
+    image: p3,
+    profile: "5.png"
   },
   {
     id: 4,
-    image: p4
+    image: p4,
+    profile: "10.png"
   },
   {
     id: 5,
-    image: p5
+    image: p5,
+    profile: "4.png"
   },
   {
     id: 6,
-    image: p6
+    image: p6,
+    profile: "12.png"
   },
   {
     id: 7,
-    image: p7
+    image: p7,
+    profile: "13.png"
   },
   {
     id: 8,
-    image: p8
+    image: p8,
+    profile: "14.png"
   },
 ];
 
