@@ -15,7 +15,7 @@ interface UserProfile {
   createdAt: Date;
   updatedAt: Date;
   dateOfSubscription: Date;
-  endOfSubscription: Date;
+  endDateOfSubscription: import('firebase/firestore').Timestamp;
 }
 
 interface AuthContextType {
@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(false);
         },
         (error) => {
-          console.error('Error fetching user profile:', error);
+          // console.error('Error fetching user profile:', error);
           setLoading(false);
         }
       );

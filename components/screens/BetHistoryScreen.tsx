@@ -22,6 +22,8 @@ import HistoryBetCard from "../cards/HistoryBetCard";
 import { formatDateTime } from "@/constants/FormatDateTime";
 import { getUserBets, placeBet } from "@/services/FirestoreService";
 import { useAuth } from "@/context/AuthContext";
+import AddBetModel from "../models/AddBetModel";
+import ShowCupModal from "../models/ShowCupModal";
 
 const betHistoryTabsList = [
   { name: "Settled", id: 1 },
@@ -39,6 +41,7 @@ const BetHistoryScreen = () => {
   const { user } = useAuth();
   const [selectedTab, setSelectedTab] = useState<number>(1);
   const [modalVisible, setModalVisible] = React.useState(false);
+  const [bookingBetModal, setBookingBetModal] = useState(false);
   const [dataChanged, setDateChanged] = useState<boolean>(false);
   const [formData, setFormData] = useState<TicketDetails>({
     dateTime: formatDateTime(new Date()),
@@ -143,12 +146,15 @@ const BetHistoryScreen = () => {
           </View>
 
           <View className="flex flex-row items-center">
+          <TouchableOpacity onPress={() => setBookingBetModal(true)}>
+
             <Image
               source={require("../../assets/cup/cup_icon.png")}
               resizeMode="contain"
               className="w-8 h-8"
               tintColor={"#353A45"}
             />
+            </TouchableOpacity>
 
             <Switch style={{ transform: [{ scale: 0.7 }] }} />
             <TouchableWithoutFeedback onPress={() => setModalVisible(true)}>
@@ -194,6 +200,8 @@ const BetHistoryScreen = () => {
           <View className="w-full h-[28rem]" />
         </ScrollView>
       </View>
+
+      <AddBetModel isOpen={bookingBetModal} onClose={() => setBookingBetModal(false)} isBookBet />
 
       <Modal
         animationType="slide"
@@ -271,6 +279,7 @@ const BetHistoryScreen = () => {
           </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
       </Modal>
+
     </>
   );
 };

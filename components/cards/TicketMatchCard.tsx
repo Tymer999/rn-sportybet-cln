@@ -46,7 +46,7 @@ const TicketMatchCard: FC<TicketMatchCardProps> = ({ match, betId, showBorderB }
     <>
       <View className={`flex-row items-center mx-3 pt-3 pb-7 ${showBorderB && "border-b-[.3px] border-b-gray-light"}`}>
         <View className="w-[4rem]">
-          {match.matchStatus === "notStart" ? <MaterialIcons name="schedule" size={22} color={"#9CA0AB"} /> : match.matchStatus === "lost" ? <MaterialIcons name="cancel" size={22} color={"#e51827"} /> :  <MaterialIcons name="check-circle" size={22} color={"#0D9737"} />}
+          {match.matchStatus === "notStart" ? <MaterialIcons name="schedule" size={22} color={"#353A45"} className="opacity-90" /> : match.matchStatus === "lost" ? <MaterialIcons name="cancel" size={22} color={"#f73b48"} /> :  <MaterialIcons name="check-circle" size={22} color={"#0D9737"} />}
         </View>
 
         <View className="flex-1 gap-1">
@@ -80,8 +80,9 @@ const TicketMatchCard: FC<TicketMatchCardProps> = ({ match, betId, showBorderB }
             <Text className="text-gray font-normal text-[13px]">FT Score</Text>
             <Text className="text-[13px]">{match.ftScore}</Text>
           </View>}
+
           <TouchableWithoutFeedback onPress={handleDoubleTap}>
-            <View className={`flex-row items-center gap-3 p-2 mt-2 ${match.matchStatus === "won" ? "bg-[#d6ebdc]" : "bg-[#f2f3f5]"}`}>
+            <View className={`flex-row  items-center gap-3 p-2 mt-2 ${match.matchStatus === "won" ? "bg-[#d6ebdc]" : "bg-[#f2f3f5]"}`}>
               <View className="items-end gap-[1.75px]">
                 <Text className="text-gray text-[13px] font-normal">Pick</Text>
                 <Text className="text-gray text-[13px] font-normal">
@@ -99,6 +100,8 @@ const TicketMatchCard: FC<TicketMatchCardProps> = ({ match, betId, showBorderB }
                 <Text className="text-black text-[13px]">{match.market}</Text>
                 {(match.matchStatus !== "notStart" && match.outcome) &&  <Text className="text-black text-[13px]">{match.outcome}</Text>}
               </View>
+
+              {match.matchStatus === "won" && <Image source={require("../../assets/cup/cup_icon.png")} resizeMode="stretch" className="w-[4rem] h-[3.75rem] z-10 absolute right-4 opacity-10" tintColor={"#0D9737"} />}
             </View>
           </TouchableWithoutFeedback>
         </View>

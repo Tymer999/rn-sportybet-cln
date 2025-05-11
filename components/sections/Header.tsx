@@ -12,6 +12,7 @@ import {
   ScrollView,
 } from "react-native";
 import React, { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { images } from "@/constants/index";
 import CustomHeaderButton from "../button/CustomHeaderButton";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -19,6 +20,7 @@ import profileImageList from "../../constants/ProfileImagesList";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import SignUpModel from "../models/SignUpModel";
 import LoginModel from "../models/LoginModel";
+import ShowCupModal from "../models/ShowCupModal"; // Adjust the path as needed
 import { useAuth } from "@/context/AuthContext";
 import { formatCurrency } from "@/constants/FormatCurrency";
 import { updateUserProfile } from "@/services/FirestoreService";
@@ -30,19 +32,46 @@ type UserDetails = {
   email: string;
 };
 
+interface Bet {
+    id: string;
+    ticketId: string;
+    dateTime: string;
+    stake: number;
+    status: "pending" | "running" | "won" | "lost";
+    bookingCode: string;
+    totalOdds: number;
+    maxBunus: number;
+    potentialReturn: number;
+    matches: Array<{
+      teams: {
+        home: string;
+        away: string;
+      };
+      prediction: string;
+      odds: number;
+    }>;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+
 const Header = () => {
+  const [wonBet, setWonBet] = useState<Bet>();
+  const [showCupModal, setShowCupModal] = useState(false);
+
   const { user, userProfile } = useAuth();
   const [modalVisible, setModalVisible] = React.useState(false);
   const [signUpModalVisible, setSignUpModalVisible] = React.useState(false);
   const [loginModalVisible, setLoginModalVisible] = React.useState(false);
   const [selectedProfileImage, setSelectedProfileImage] = useState<number>(1);
-  const [profileImage, setProfileImage] = useState<string>(userProfile?.profilePicture ?? "");
+  const [profileImage, setProfileImage] = useState<string>(
+    userProfile?.profilePicture ?? ""
+  );
   const [formData, setFormData] = useState<UserDetails>({
     balance: userProfile?.balance.toFixed(2) ?? "0.00",
     username: userProfile?.username ?? "",
     phoneNumber: userProfile?.phoneNumber ?? "",
     email: userProfile?.email ?? "",
-  });  
+  });
 
   const handleBalancePress = () => {
     setModalVisible(true);
@@ -50,7 +79,7 @@ const Header = () => {
 
   const handleProfileUpdate = async () => {
     // Handle profile update logic here
-    
+
     if (!user?.uid) {
       console.error("User ID is undefined");
       return;
@@ -61,11 +90,11 @@ const Header = () => {
       phoneNumber: formData.phoneNumber,
       email: formData.email,
       profilePicture: profileImage,
-    } )
+    });
 
     setModalVisible(false);
   };
-  
+
   const profileImagesElements = profileImageList.map((profile, index) => (
     <TouchableWithoutFeedback
       key={profile.id}
@@ -96,9 +125,24 @@ const Header = () => {
 
         {user ? (
           <View className="flex-row items-center gap-2">
-            <FontAwesome name="search" size={18} color="white" />
+            <FontAwesome
+              name="search"
+              size={18}
+              color="white"
+              onPress={async () => {
+                const wonBetString = await AsyncStorage.getItem("wonBet");
+                const wonBet = wonBetString ? JSON.parse(wonBetString) : null;
+                setWonBet(wonBet);
+
+                setShowCupModal(true);
+              }}
+            />
             <CustomHeaderButton
-              text={userProfile?.currency + " " +  formatCurrency(userProfile?.balance ?? 0)}
+              text={
+                userProfile?.currency +
+                " " +
+                formatCurrency(userProfile?.balance ?? 0)
+              }
               textColor="text-white"
               backgroundColor="bg-transparent"
               showAvatar={user !== null}
@@ -223,6 +267,14 @@ const Header = () => {
           </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
       </Modal>
+
+      {wonBet && (
+        <ShowCupModal
+          isOpen={showCupModal}
+          onClose={() => setShowCupModal(false)}
+          bet={wonBet}
+        />
+      )}
     </>
   );
 };

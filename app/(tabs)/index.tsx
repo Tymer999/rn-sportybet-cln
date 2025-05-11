@@ -11,9 +11,11 @@ import UpcomingBetSection from "@/components/sections/UpcomingBetSection";
 import SelectedBetQuantityButton from "@/components/button/SelectedBetQuantityButton";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import PrizeWinnersSection from "@/components/sections/PrizeWinnersSection";
+import ShowCupModal from "@/components/models/ShowCupModal";
 
 const HomeScreen = () => {
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  
 
   const sections = [
     { type: 'carousel', key: 'carousel' },
@@ -92,7 +94,7 @@ const HomeScreen = () => {
           <RefreshControl
             refreshing={refreshing}
             colors={['#353A45']}
-            tintColor="#353A45"
+            // tintColor="#353A45"
             onRefresh={() => {
               setRefreshing(true);
               setTimeout(() => {
@@ -102,6 +104,8 @@ const HomeScreen = () => {
           />
         }
       />
+      
+      {/* <ShowCupModal isOpen={true} onClose={() => {}} bet={} /> */}
       <SelectedBetQuantityButton />
       <StatusBar backgroundColor="red" style="light" />
     </View>

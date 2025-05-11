@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import BookBetModel from "../models/BookBetModel";
 
 const SelectedBetQuantityButton = () => {
-  const [modelVisible, setModalVisible] = useState(true)
+  const [modelVisible, setModalVisible] = useState(false)
   {
     /* Fixed Container */
   }

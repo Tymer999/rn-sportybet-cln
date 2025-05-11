@@ -41,7 +41,7 @@ interface Bet {
   bookingCode: string;
   ticketId: string;
   dateTime: string;
-  status: "void" | "notStart" | "won" | "lost";
+  status: "void" | "running" | "won" | "lost";
   matches: Array<{
     teams: {
       home: string;
@@ -98,7 +98,11 @@ export const placeBet = async (
   uid: string,
   stake: number,
   dateTime: string,
-  ticketId: string
+  ticketId: string,
+  status?: "void" | "running" | "won" | "lost",
+  maxBunus?: number,
+  matches?: Array<any>,
+  bookingCode?: string
 ): Promise<string> => {
   try {
     const bet: Bet = {
@@ -106,11 +110,11 @@ export const placeBet = async (
       ticketId,
       dateTime,
       totalOdds: 1.0,
-      status: "won",
-      bookingCode: "BOOKING_CODE",
-      maxBunus: 1.0,
+      status: status || "won",
+      bookingCode: bookingCode || "BOOKINGCODE",
+      maxBunus: maxBunus || 1.0,
       potentialReturn: stake * 1.0,
-      matches: [], // Add your matches data here
+      matches: matches || [], // Add your matches data here
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -188,19 +192,23 @@ export const getUserBets = (
     const q = query(betsRef, orderBy("createdAt", "desc"));
 
     // Set up real-time listener
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const bets = querySnapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...(data as Bet),
-        };
-      });
-      
-      onUpdate(bets);
-    }, (error) => {
-      console.error("Error listening to bets:", error);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (querySnapshot) => {
+        const bets = querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...(data as Bet),
+          };
+        });
+
+        onUpdate(bets);
+      },
+      (error) => {
+        console.error("Error listening to bets:", error);
+      }
+    );
 
     // Return unsubscribe function
     return unsubscribe;
@@ -273,10 +281,18 @@ export const updateMatch = async (
     let newBetStatus: "void" | "running" | "won" | "lost" = "won";
 
     // Check matches in priority order
-    const hasLostMatch = matches.some((match: { matchStatus: string }) => match.matchStatus === "lost");
-    const hasVoidMatch = matches.some((match: { matchStatus: string }) => match.matchStatus === "void");
-    const hasNotStartedMatch = matches.some((match: { matchStatus: string }) => match.matchStatus === "notStart");
-    const allMatchesWon = matches.every((match: { matchStatus: string }) => match.matchStatus === "won");
+    const hasLostMatch = matches.some(
+      (match: { matchStatus: string }) => match.matchStatus === "lost"
+    );
+    const hasVoidMatch = matches.some(
+      (match: { matchStatus: string }) => match.matchStatus === "void"
+    );
+    const hasNotStartedMatch = matches.some(
+      (match: { matchStatus: string }) => match.matchStatus === "notStart"
+    );
+    const allMatchesWon = matches.every(
+      (match: { matchStatus: string }) => match.matchStatus === "won"
+    );
 
     if (hasLostMatch) {
       newBetStatus = "lost";
@@ -313,6 +329,20 @@ export const getUserProfile = async (
   }
 };
 
+export const updateUserCurrency = async (
+  uid: string,
+  newCurrency: string
+): Promise<void> => {
+  try {
+    await updateDoc(doc(db, "users", uid), {
+      currency: newCurrency,
+      updatedAt: new Date(),
+    });
+  } catch (error) {
+    console.error("Error updating user balance:", error);
+    throw error;
+  }
+};
 export const updateUserBalance = async (
   uid: string,
   newBalance: number

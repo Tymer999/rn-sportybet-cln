@@ -1,13 +1,22 @@
 import { View, Text, Image } from "react-native";
-import React from "react";
+import React, { FC } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { formatCurrency } from "@/constants/FormatCurrency";
 
-const GrandPriceCard = () => {
+interface GrandPriceCardProps {
+  number: string,
+  amount: number,
+  time: string
+}
+
+const GrandPriceCard: FC<GrandPriceCardProps> = ({number, amount, time}) => {
+  const {userProfile} = useAuth();
   return (
     <View style={{ pointerEvents: 'none' }}>
       <View className="bg-black py-2 px-4 rounded-sm rounded-br-[2.5rem] w-[10rem] relative gap-1 overflow-hidden">
-        <Text className="text-white text-xs z-30" numberOfLines={1}>53*****662 won</Text>
+        <Text className="text-white text-xs z-30" numberOfLines={1}>{number} won</Text>
         <Text className="text-secondary-dark text-lg font-bold italic text-nowrap shrink-0 z-30" numberOfLines={1}>
-          GHS 5,030.35
+          {userProfile?.currency} {formatCurrency(amount)}
         </Text>
         <Text className="text-white text-xs z-30" numberOfLines={1}>in Sports</Text>
 
@@ -18,7 +27,7 @@ const GrandPriceCard = () => {
         />
       </View>
 
-      <Text className="text-sm text-gray">3 hours ago</Text>
+      <Text className="text-sm text-gray">{time} ago</Text>
     </View>
   );
 };

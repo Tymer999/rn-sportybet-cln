@@ -10,7 +10,7 @@ interface GameTab {
 const gameTabs: GameTab[] = [
   {
     id: 1,
-    icon: require("../../assets/game_icons/1bb13bffe71ad5abd3404668611eaef9.png"),
+    icon: require("../../assets/game_icons/all_sports.png"),
     name: "All Sports",
   },
   {
@@ -20,8 +20,58 @@ const gameTabs: GameTab[] = [
   },
   {
     id: 3,
-    icon: require("../../assets/game_icons/1bb13bffe71ad5abd3404668611eaef9.png"),
+    icon: require("../../assets/game_icons/sporty_hero.png"),
     name: "Sporty Hero",
+  },
+  {
+    id: 4,
+    icon: require("../../assets/game_icons/d0839820d9f53131fa12f9583c909440.png"),
+    name: "Aviator",
+  },
+  {
+    id: 5,
+    icon: require("../../assets/game_icons/virtuals.png"),
+    name: "Virtuals",
+  },
+  {
+    id: 6,
+    icon: require("../../assets/game_icons/promotions.png"),
+    name: "Promotions",
+  },
+  {
+    id: 7,
+    icon: require("../../assets/game_icons/code_hub.png"),
+    name: "Code Hub",
+  },
+  {
+    id: 8,
+    icon: require("../../assets/game_icons/games.png"),
+    name: "Games",
+  },
+  {
+    id: 9,
+    icon: require("../../assets/game_icons/instant_virtuals.png"),
+    name: "Instant Virtuals",
+  },
+  {
+    id: 10,
+    icon: require("../../assets/game_icons/jackpot.png"),
+    name: "Jackpot",
+  },
+  {
+    id: 11,
+    icon: require("../../assets/game_icons/load_code.png"),
+    name: "Load Code",
+  },
+  {
+    id: 12,
+    icon: require("../../assets/game_icons/verify.png"),
+    name: "Verify Bet",
+  },
+  {
+    id: 13,
+    icon: require("../../assets/game_icons/multi_marker.png"),
+    name: "Multi Marker",
   },
   // Add more game tabs as needed
 ];
@@ -40,7 +90,7 @@ const AllGamesTab = () => {
           <TouchableOpacity
             key={tab.id}
             onPress={() => setActiveTab(tab.id)}
-            className={`flex items-center flex-col justify-start mx-2 w-14 mt-2`}
+            className={`flex items-center flex-col justify-start mx-1 w-[3.75rem] mt-2`}
           >
             <Image
               source={tab.icon}

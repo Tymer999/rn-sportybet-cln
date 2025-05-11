@@ -3,12 +3,14 @@ import React from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import DepositWithdrawButton from "../button/DepositWithdrawButton";
 import { useAuth } from "@/context/AuthContext";
+import { formatCurrency } from "@/constants/FormatCurrency";
+import { router } from "expo-router";
 
 const ProfileHeader = () => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   return (
     <View className="w-full bg-black px-4 pt-3">
-      {!user ? (
+      {user ? (
         <View>
           <View className="w-full flex flex-row items-center justify-between">
             <View className="flex flex-row gap-2 items-center">
@@ -19,7 +21,7 @@ const ProfileHeader = () => {
               />
 
               <Text className="text-white font-medium text-lg">
-                ALICE BOAHEMAA OSEI
+                {userProfile?.username}
               </Text>
 
               <MaterialIcons
@@ -29,7 +31,12 @@ const ProfileHeader = () => {
               />
             </View>
 
-            <MaterialIcons name="settings" size={20} color={"#fff"} />
+            <MaterialIcons
+              name="settings"
+              size={20}
+              color={"#fff"}
+              onPress={() => router.push("/settingsScreen")}
+            />
           </View>
 
           <View className="flex flex-row items-center justify-between mt-10">
@@ -38,12 +45,23 @@ const ProfileHeader = () => {
               <Text className="text-white">Total Balance</Text>
             </View>
 
-            <Text className="text-white font-bold">GHS 1.71</Text>
+            <Text className="text-white font-bold">
+              {userProfile?.currency}{" "}
+              {formatCurrency(userProfile?.balance ?? 1.0)}
+            </Text>
           </View>
         </View>
       ) : (
-        <View>
-          <Text>IsLogged out</Text>
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center justify-center gap-2">
+            <MaterialIcons name="person-2" size={30} />
+            <Text className="text-lg text-white">Login to View</Text>
+            <MaterialIcons name="arrow-forward-ios" size={20} color={"#fff"} />
+          </View>
+          <View className="flex-row items-center gap-2">
+            <Text className="text-lg text-white">Dark Mode</Text>
+            <MaterialIcons name="dark-mode" size={20} color={"#fff"} />
+          </View>
         </View>
       )}
 

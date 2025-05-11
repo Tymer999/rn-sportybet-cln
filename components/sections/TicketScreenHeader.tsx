@@ -10,6 +10,7 @@ import {
   TextInput,
   Platform,
   Keyboard,
+  ImageBackground,
 } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import React, { FC, useState } from "react";
@@ -22,6 +23,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { formatCurrency } from "@/constants/FormatCurrency";
 import { calculateTotalOdds } from "@/utils/utils";
+import AddBetModel from "../models/AddBetModel";
 
 type Match = {
   teams: {
@@ -62,7 +64,7 @@ const TicketScreenHeader: FC<TicketScreenHeaderProps> = ({ bet }) => {
   const [dateTimeModel, setDateTimeModel] = React.useState(false);
   const [bookingCodeModal, setBookingCodeModal] = React.useState(false);
   const [betValue, setBetValue] = useState("");
-  const [maxBunus, setMaxBonus] = useState(1.00);
+  const [maxBunus, setMaxBonus] = useState("0.10");
   const { user } = useAuth();
 
   const handlePaste = async () => {
@@ -201,9 +203,10 @@ const TicketScreenHeader: FC<TicketScreenHeaderProps> = ({ bet }) => {
   const handleBookingCodeUpdate = async (newBookingCode: string) => {
     try {
       if (!user) return;
-      
 
-      await updateTicketDetails(user.uid, bet.id, { bookingCode: newBookingCode });
+      await updateTicketDetails(user.uid, bet.id, {
+        bookingCode: newBookingCode,
+      });
 
       // Update local state
 
@@ -215,8 +218,16 @@ const TicketScreenHeader: FC<TicketScreenHeaderProps> = ({ bet }) => {
 
   return (
     <>
-      <View className={`bg-[#1b1e25] px-4 ${bet.status === "running" ? "pb-3" : "pb-6"} pt-3`}>
-        <View className="flex-row items-center justify-between mb-3">
+      <View
+        className={`bg-[#1b1e25] ${
+          bet.status === "running"
+            ? "pb-3"
+            : bet.status === "won"
+            ? "pb-0"
+            : "pb-6"
+        } pt-3`}
+      >
+        <View className="flex-row items-center justify-between mb-3 px-4">
           <TouchableWithoutFeedback onPress={() => setTicketIdModel(true)}>
             <Text className="text-sm font-medium text-gray">
               Ticket ID: {bet.ticketId}
@@ -228,7 +239,7 @@ const TicketScreenHeader: FC<TicketScreenHeaderProps> = ({ bet }) => {
             </Text>
           </TouchableWithoutFeedback>
         </View>
-        <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center justify-between px-4">
           <TouchableWithoutFeedback onPress={() => setPasteBetModel(true)}>
             <Text className="text-white font-medium text-lg">
               {bet.matches.length === 1 ? "Single" : "Multiple"}
@@ -253,13 +264,11 @@ const TicketScreenHeader: FC<TicketScreenHeaderProps> = ({ bet }) => {
                 className="w-8 h-7"
                 tintColor={"#32CE62"}
               />
-              <Text className="text-secondary font-medium text-lg">
-                Won
-              </Text>
+              <Text className="text-secondary font-medium text-lg">Won</Text>
             </View>
           )}
         </View>
-        <View className="flex-row items-center justify-between mt-2">
+        <View className="flex-row items-center justify-between mt-2 px-4">
           <Text className="text-gray text-[15px]">Total Return</Text>
           {bet.status === "lost" ? (
             <Text className="text-gray text-xl font-bold">0.00</Text>
@@ -267,15 +276,19 @@ const TicketScreenHeader: FC<TicketScreenHeaderProps> = ({ bet }) => {
             <Text className="text-gray text-xl font-bold">--</Text>
           ) : (
             <Text className="text-secondary text-xl font-bold">
-              {formatCurrency(calculateTotalOdds(bet.matches) * bet.stake)}
+              {formatCurrency(
+                calculateTotalOdds(bet.matches) * bet.stake +
+                  bet.maxBunus * bet.stake
+              )}
             </Text>
           )}
         </View>
-
-        <View className="w-full h-[.5px] bg-[#353a45] my-3" />
+        <View className="px-4">
+          <View className="w-[100%] h-[.5px] bg-[#353a45] my-3" />
+        </View>
 
         <TouchableWithoutFeedback onPress={() => setStakeModal(true)}>
-          <View className="flex-row items-center justify-between mb-[5px]">
+          <View className="flex-row items-center justify-between mb-[5px] px-4">
             <Text className="text-gray text-[15px]">Total Stake</Text>
             <Text className="text-white text-[15px]">
               {bet.stake.toFixed(2)}
@@ -283,18 +296,52 @@ const TicketScreenHeader: FC<TicketScreenHeaderProps> = ({ bet }) => {
           </View>
         </TouchableWithoutFeedback>
 
-        <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center justify-between px-4">
           <Text className="text-gray text-[15px]">Total Odds</Text>
           <Text className="text-white text-[15px]">
             {calculateTotalOdds(bet.matches).toFixed(2)}
           </Text>
         </View>
 
+        {bet.status === "won" && (
+          <View>
+            <View className="flex-row items-center justify-between mt-2 px-4">
+              <Text className="text-gray text-[15px]">Max. Bonus</Text>
+              <Text className="text-white text-[15px]">
+                {bet.maxBunus.toFixed(2)}
+              </Text>
+            </View>
+
+            <View>
+              <ImageBackground
+                source={require("../../assets/banners/congratulations.png")}
+                resizeMode="stretch"
+                className="w-full h-[5.75rem] flex-row items-center justify-between px-4"
+              >
+                <View className="pl-[4.55rem]">
+                  <Text className="text-white font-bold text-lg">
+                    Congratulations!
+                  </Text>
+                  <Text className="text-[#f1c447] font-bold text-lg">
+                    "{"Tymer999"}"
+                  </Text>
+                  <Text className="text-white font-bold text-lg">
+                    You are Amazing!
+                  </Text>
+                </View>
+
+                <View className="items-center justify-center px-2 py-2 bg-[#e0ad20] rounded-sm h-[3.15rem] w-[8.55rem]">
+                  <Text className="text-[#000] font-bold">Show Off</Text>
+                </View>
+              </ImageBackground>
+            </View>
+          </View>
+        )}
         {bet.status === "running" && (
-          <View className="mt-[4.55px] gap-[5px]">
+          <View className="mt-[4.55px] gap-[5px] px-4">
             <View className="flex-row items-center justify-between">
               <Text className="text-gray text-[15px]">Max Bonus</Text>
-              <Text className="text-white text-[15px]">0.02</Text>
+              <Text className="text-white text-[15px]">{formatCurrency(bet.maxBunus * bet.stake)}</Text>
             </View>
             <View className="flex-row items-center justify-between">
               <Text className="text-gray text-[15px]">Total Pot. Win</Text>
@@ -364,7 +411,7 @@ const TicketScreenHeader: FC<TicketScreenHeaderProps> = ({ bet }) => {
         initialValue={bet.bookingCode}
       />
 
-      <Modal
+      {/* <Modal
         animationType="slide"
         transparent={true}
         visible={pasteBetModel}
@@ -400,8 +447,8 @@ const TicketScreenHeader: FC<TicketScreenHeaderProps> = ({ bet }) => {
                   <TextInput
                     className="border border-gray-300 rounded-2xl p-4 mb-3 mr-[1px]"
                     placeholder="Max. Bonus"
-                    value={maxBunus.toFixed(2)}
-                    onChangeText={(e) => setMaxBonus(parseFloat(e) || 0)}
+                    value={maxBunus}
+                    onChangeText={(e) => setMaxBonus(e)}
                     placeholderTextColor={"#BDC0C7"}
                     keyboardType="numeric"
                   />
@@ -425,7 +472,13 @@ const TicketScreenHeader: FC<TicketScreenHeaderProps> = ({ bet }) => {
             </View>
           </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
-      </Modal>
+      </Modal> */}
+
+      <AddBetModel
+        isOpen={pasteBetModel}
+        onClose={() => setPasteBetModel(false)}
+        bet={bet}
+      />
     </>
   );
 };

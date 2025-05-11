@@ -1,6 +1,7 @@
 import { View, Text, ScrollView, Animated, Image } from "react-native";
 import React, { useRef } from "react";
 import UpcomingMatchCard from "../cards/UpcomingMatchCard";
+import { useMatches } from "@/hooks/useMatches";
 
 interface Team {
   name: string;
@@ -14,6 +15,36 @@ interface Match {
   awayTeam: Team;
   time: string;
   league: string;
+}
+
+interface FeaturedMatch {
+  id: string;
+  league: string;
+  homeName: string;
+  awayName: string;
+  homeScore: string;
+  awayScore: string;
+  time: string;
+  date: string;
+  status: "live" | "upcoming" | "finished";
+  marketSize: string;
+  stv: boolean;
+  outcome: Array<{
+    desc: string;
+    odds: string;
+    pick: string;
+  }>;
+  odds: {
+    home: number;
+    draw: number;
+    away: number;
+  };
+  score: string;
+  eventTime: string;
+  matchStatus: string;
+  isLive: boolean;
+  isBestOdds: boolean,
+  isHot: boolean;
 }
 
 interface LiveMatchCardProps {
@@ -182,15 +213,15 @@ const Header = () => {
 };
 
 const Content = () => {
+  const { matches, loading, error } = useMatches();
+
   return (
     <View className="flex-1 bg-background-light">
-        <UpcomingMatchCard />
-        <UpcomingMatchCard />
-        <UpcomingMatchCard />
-        <UpcomingMatchCard />
-        <UpcomingMatchCard />
-        <UpcomingMatchCard />
-        <UpcomingMatchCard />
+      {(matches.featured as FeaturedMatch[])
+        .filter((match) => match.league.includes("Football") && match.isLive === false)
+        .map((match, index) => (
+          <UpcomingMatchCard match={match} key={index} />
+        ))}
     </View>
   );
 };
